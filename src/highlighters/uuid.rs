@@ -38,14 +38,16 @@ impl UuidHighlighter {
 
 impl Highlight for UuidHighlighter {
     fn apply(&self, input: &str) -> String {
+        let mut b = [0; 2];
+
         self.regex
             .replace_all(input, |caps: &Captures<'_>| {
                 caps[0]
                     .chars()
                     .map(|c| match c {
-                        '0'..='9' => format!("{}", self.number.paint(c.to_string())),
-                        'a'..='f' | 'A'..='F' => format!("{}", self.letter.paint(c.to_string())),
-                        '-' => format!("{}", self.dash.paint(c.to_string())),
+                        '0'..='9' => format!("{}", self.number.paint(c.encode_utf8(&mut b) as &str)),
+                        'a'..='f' | 'A'..='F' => format!("{}", self.letter.paint(c.encode_utf8(&mut b) as &str)),
+                        '-' => format!("{}", self.dash.paint(c.encode_utf8(&mut b) as &str)),
                         _ => c.to_string(),
                     })
                     .collect::<String>()
