@@ -74,10 +74,10 @@ impl JsonHighlighter {
                 .unwrap();
             }
             Value::Number(n) => {
-                write!(output, "{}", n).unwrap();
+                write!(output, "{n}").unwrap();
             }
             Value::Bool(b) => {
-                write!(output, "{}", b).unwrap();
+                write!(output, "{b}").unwrap();
             }
             Value::Null => {
                 write!(output, "null").unwrap();

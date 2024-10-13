@@ -61,7 +61,7 @@ impl Highlight for PointerHighlighter {
                     .collect::<String>();
 
                 caps.name("second_half").map_or_else(
-                    || format!("{}{}", formatted_prefix, formatted_first_half),
+                    || format!("{formatted_prefix}{formatted_first_half}"),
                     |second_half| {
                         let formatted_second_half = second_half
                             .as_str()

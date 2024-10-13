@@ -10,7 +10,7 @@ impl fmt::Display for Error {
         match self {
             Error::RegexErrors(errors) => {
                 for error in errors {
-                    writeln!(f, "{}", error)?;
+                    writeln!(f, "{error}")?;
                 }
                 Ok(())
             }

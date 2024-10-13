@@ -48,7 +48,7 @@ impl DateDashHighlighter {
         let separator2 = caps.name("separator2").map(|m| self.separator.paint(m.as_str()));
 
         match (year, first, second, separator1, separator2) {
-            (Some(y), Some(f), Some(s), Some(s1), Some(s2)) => Some(format!("{}{}{}{}{}", y, s1, f, s2, s)),
+            (Some(y), Some(f), Some(s), Some(s1), Some(s2)) => Some(format!("{y}{s1}{f}{s2}{s}")),
             _ => None,
         }
     }

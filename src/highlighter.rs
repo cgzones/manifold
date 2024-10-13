@@ -1,4 +1,7 @@
-use crate::config::*;
+use crate::config::{
+    DateTimeConfig, IpV4Config, IpV6Config, JsonConfig, KeyValueConfig, KeywordConfig, NumberConfig, PointerConfig,
+    QuotesConfig, RegexConfig, UnixPathConfig, UnixProcessConfig, UrlConfig, UuidConfig,
+};
 use crate::error::Error;
 use crate::highlighters::date_dash::DateDashHighlighter;
 use crate::highlighters::date_time::TimeHighlighter;
@@ -34,6 +37,7 @@ impl Highlighter {
         }
     }
 
+    #[must_use]
     pub fn builder() -> HighlightBuilder {
         HighlightBuilder {
             highlighters: Vec::new(),
@@ -47,6 +51,7 @@ impl Highlighter {
         self
     }
 
+    #[must_use]
     pub fn apply(&self, text: String) -> String {
         self.highlighters
             .iter()

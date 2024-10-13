@@ -48,22 +48,19 @@ impl Highlight for RegexpHighlighter {
                 new_string.push_str(&get_pre_match_text(input, last_end, entire_match.start()));
 
                 // Determine what part of the match to highlight
-                match capture_groups {
-                    1 => {
-                        if let Some(captured) = caps.get(1) {
-                            // Add the text before the capturing group (from the start of the entire match)
-                            new_string.push_str(&get_pre_match_text(input, entire_match.start(), captured.start()));
-                            // Highlight the captured group
-                            new_string.push_str(&format!("{}", color.paint(captured.as_str())));
-                            // Add the text after the capturing group (up to the end of the entire match)
-                            new_string.push_str(&get_pre_match_text(input, captured.end(), entire_match.end()));
-                        }
+                if capture_groups == 1 {
+                    if let Some(captured) = caps.get(1) {
+                        // Add the text before the capturing group (from the start of the entire match)
+                        new_string.push_str(&get_pre_match_text(input, entire_match.start(), captured.start()));
+                        // Highlight the captured group
+                        new_string.push_str(&format!("{}", color.paint(captured.as_str())));
+                        // Add the text after the capturing group (up to the end of the entire match)
+                        new_string.push_str(&get_pre_match_text(input, captured.end(), entire_match.end()));
                     }
-                    _ => {
-                        // No capturing groups or more than one, highlight the entire match
-                        let captured = entire_match.as_str();
-                        new_string.push_str(&format!("{}", color.paint(captured)));
-                    }
+                } else {
+                    // No capturing groups or more than one, highlight the entire match
+                    let captured = entire_match.as_str();
+                    new_string.push_str(&format!("{}", color.paint(captured)));
                 }
 
                 // Update the last_end position to the end of the entire match

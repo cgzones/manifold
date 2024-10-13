@@ -75,7 +75,7 @@ impl Highlight for UrlHighlighter {
                                 self.query_params_value.paint(value)
                             )
                         });
-                output.push_str(&format!("{}", query_highlighted));
+                output.push_str(&format!("{query_highlighted}"));
             }
 
             output

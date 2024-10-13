@@ -51,7 +51,7 @@ fn split_into_chunks(input: &str) -> Vec<Chunk> {
     } {
         let i = i + start;
         if inside_escape {
-            chunks.push(Chunk::AlreadyHighlighted(&input[start..=i + reset_code.len() - 1]));
+            chunks.push(Chunk::AlreadyHighlighted(&input[start..(i + reset_code.len())]));
             start = i + reset_code.len();
         } else {
             if i != start {
@@ -85,15 +85,15 @@ mod tests {
         assert_eq!(chunks.len(), 3);
         match &chunks[0] {
             Chunk::NotHighlighted(text) => assert_eq!(*text, "Here is a date "),
-            _ => panic!("Unexpected chunk type."),
+            Chunk::AlreadyHighlighted(_) => panic!("Unexpected chunk type."),
         }
         match &chunks[1] {
             Chunk::AlreadyHighlighted(text) => assert_eq!(*text, "\x1b[31m2023-06-24\x1b[0m"),
-            _ => panic!("Unexpected chunk type."),
+            Chunk::NotHighlighted(_) => panic!("Unexpected chunk type."),
         }
         match &chunks[2] {
             Chunk::NotHighlighted(text) => assert_eq!(*text, ", and here is a number 12345."),
-            _ => panic!("Unexpected chunk type."),
+            Chunk::AlreadyHighlighted(_) => panic!("Unexpected chunk type."),
         }
     }
 }

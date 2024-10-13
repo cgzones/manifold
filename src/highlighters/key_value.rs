@@ -36,7 +36,7 @@ impl Highlight for KeyValueHighlighter {
                     .map(|e| format!("{}", self.separator.paint(e.as_str())))
                     .unwrap_or_default();
 
-                format!("{}{}{}", space_or_start, key, equals_sign)
+                format!("{space_or_start}{key}{equals_sign}")
             })
             .to_string()
     }
