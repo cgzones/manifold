@@ -39,8 +39,8 @@ impl UrlHighlighter {
 }
 
 impl Highlight for UrlHighlighter {
-    fn apply(&self, input: &str) -> String {
-        let highlighted = self.url_regex.replace_all(input, |caps: &regex::Captures<'_>| {
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str> {
+        self.url_regex.replace_all(input, |caps: &regex::Captures<'_>| {
             let protocol = &caps["protocol"];
             let protocol_style = match protocol {
                 "http" => self.http,
@@ -76,9 +76,7 @@ impl Highlight for UrlHighlighter {
                     .paint(caps.name("path").map(|m| m.as_str()).unwrap_or_default()),
                 query_fmt
             )
-        });
-
-        highlighted.into_owned()
+        })
     }
 }
 
@@ -120,7 +118,7 @@ mod tests {
 
         for (input, expected) in cases {
             let actual = highlighter.apply(input);
-            assert_eq!(expected, actual.convert_escape_codes());
+            assert_eq!(expected, actual.to_string().convert_escape_codes());
         }
     }
 }

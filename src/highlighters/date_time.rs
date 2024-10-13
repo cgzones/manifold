@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::highlighter::Highlight;
 use crate::DateTimeConfig;
 use nu_ansi_term::Style as NuStyle;
@@ -14,12 +16,12 @@ impl TimeHighlighter {
     pub fn new(time_config: DateTimeConfig) -> Result<Self, Error> {
         let regex = Regex::new(
             r"(?x)
-            (?P<T>[T\s])?                              
+            (?P<T>[T\s])?
             (?P<hours>[01]?\d|2[0-3])(?P<colon1>:)
             (?P<minutes>[0-5]\d)(?P<colon2>:)
             (?P<seconds>[0-5]\d)
-            (?P<frac_sep>[.,:])?(?P<frac_digits>\d+)?  
-            (?P<tz>Z)?            
+            (?P<frac_sep>[.,:])?(?P<frac_digits>\d+)?
+            (?P<tz>Z)?
             ",
         )?;
 
@@ -33,32 +35,30 @@ impl TimeHighlighter {
 }
 
 impl Highlight for TimeHighlighter {
-    fn apply(&self, input: &str) -> String {
-        self.regex
-            .replace_all(input, |caps: &regex::Captures<'_>| {
-                let paint_and_stringify = |name: &str, style: &NuStyle| {
-                    caps.name(name)
-                        .map(|m| style.paint(m.as_str()).to_string())
-                        .unwrap_or_default()
-                };
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str> {
+        self.regex.replace_all(input, |caps: &regex::Captures<'_>| {
+            let paint_and_stringify = |name: &str, style: &NuStyle| {
+                caps.name(name)
+                    .map(|m| style.paint(m.as_str()).to_string())
+                    .unwrap_or_default()
+            };
 
-                let parts = [
-                    ("T", &self.zone),
-                    ("hours", &self.time),
-                    ("colon1", &self.separator),
-                    ("minutes", &self.time),
-                    ("colon2", &self.separator),
-                    ("seconds", &self.time),
-                    ("frac_sep", &self.separator),
-                    ("frac_digits", &self.time),
-                    ("tz", &self.zone),
-                ];
+            let parts = [
+                ("T", &self.zone),
+                ("hours", &self.time),
+                ("colon1", &self.separator),
+                ("minutes", &self.time),
+                ("colon2", &self.separator),
+                ("seconds", &self.time),
+                ("frac_sep", &self.separator),
+                ("frac_digits", &self.time),
+                ("tz", &self.zone),
+            ];
 
-                parts.iter().fold(String::new(), |acc, (name, style)| {
-                    acc + &paint_and_stringify(name, style)
-                })
+            parts.iter().fold(String::new(), |acc, (name, style)| {
+                acc + &paint_and_stringify(name, style)
             })
-            .to_string()
+        })
     }
 }
 
@@ -115,7 +115,7 @@ mod tests {
 
         for (input, expected) in cases {
             let actual = highlighter.apply(input);
-            assert_eq!(expected, actual.convert_escape_codes());
+            assert_eq!(expected, actual.to_string().convert_escape_codes());
         }
     }
 }

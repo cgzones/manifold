@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::highlighter::Highlight;
 use crate::IpV6Config;
 use nu_ansi_term::Style as NuStyle;
@@ -24,28 +26,26 @@ impl IpV6Highlighter {
 }
 
 impl Highlight for IpV6Highlighter {
-    fn apply(&self, input: &str) -> String {
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str> {
         let mut b = [0; 2];
 
-        self.regex
-            .replace_all(input, |caps: &Captures<'_>| {
-                let text = &caps[0];
-                if !text.chars().any(|c| matches!(c, 'a'..='f' | 'A'..='F')) {
-                    // If no hexadecimal letters are found, return the original text unmodified
-                    text.to_string()
-                } else {
-                    // Apply highlighting as before
-                    text.chars()
-                        .map(|c| match c {
-                            '0'..='9' => self.number.paint(c.encode_utf8(&mut b) as &str).to_string(),
-                            'a'..='f' | 'A'..='F' => self.letter.paint(c.encode_utf8(&mut b) as &str).to_string(),
-                            ':' | '.' => self.separator.paint(c.encode_utf8(&mut b) as &str).to_string(),
-                            _ => c.to_string(),
-                        })
-                        .collect::<String>()
-                }
-            })
-            .to_string()
+        self.regex.replace_all(input, |caps: &Captures<'_>| {
+            let text = &caps[0];
+            if !text.chars().any(|c| matches!(c, 'a'..='f' | 'A'..='F')) {
+                // If no hexadecimal letters are found, return the original text unmodified
+                text.to_string()
+            } else {
+                // Apply highlighting as before
+                text.chars()
+                    .map(|c| match c {
+                        '0'..='9' => self.number.paint(c.encode_utf8(&mut b) as &str).to_string(),
+                        'a'..='f' | 'A'..='F' => self.letter.paint(c.encode_utf8(&mut b) as &str).to_string(),
+                        ':' | '.' => self.separator.paint(c.encode_utf8(&mut b) as &str).to_string(),
+                        _ => c.to_string(),
+                    })
+                    .collect::<String>()
+            }
+        })
     }
 }
 
@@ -81,7 +81,7 @@ mod tests {
 
         for (input, expected) in cases {
             let actual = highlighter.apply(input);
-            assert_eq!(expected, actual.convert_escape_codes());
+            assert_eq!(expected, actual.to_string().convert_escape_codes());
         }
     }
 }

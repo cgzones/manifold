@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::highlighter::Highlight;
 use crate::IpV4Config;
 use nu_ansi_term::Style as NuStyle;
@@ -32,7 +34,7 @@ impl IpV4Highlighter {
 }
 
 impl Highlight for IpV4Highlighter {
-    fn apply(&self, input: &str) -> String {
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str> {
         let segment = &self.number;
         let separator = &self.separator;
         let highlight_groups = [
@@ -45,15 +47,13 @@ impl Highlight for IpV4Highlighter {
             (segment, 7),
         ];
 
-        self.regex
-            .replace_all(input, |caps: &Captures<'_>| {
-                let mut output = String::new();
-                for &(color, group) in &highlight_groups {
-                    output.push_str(&format!("{}", color.paint(&caps[group])));
-                }
-                output
-            })
-            .to_string()
+        self.regex.replace_all(input, |caps: &Captures<'_>| {
+            let mut output = String::new();
+            for &(color, group) in &highlight_groups {
+                output.push_str(&format!("{}", color.paint(&caps[group])));
+            }
+            output
+        })
     }
 }
 
@@ -88,7 +88,7 @@ mod tests {
 
         for (input, expected) in cases {
             let actual = highlighter.apply(input);
-            assert_eq!(expected, actual.convert_escape_codes());
+            assert_eq!(expected, actual.to_string().convert_escape_codes());
         }
     }
 }

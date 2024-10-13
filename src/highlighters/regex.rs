@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::highlighter::Highlight;
 use crate::RegexConfig;
 use nu_ansi_term::Style as NuStyle;
@@ -34,7 +36,7 @@ impl RegexpHighlighter {
 }
 
 impl Highlight for RegexpHighlighter {
-    fn apply(&self, input: &str) -> String {
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str> {
         let regex = &self.regex;
         let color = &self.style;
         let capture_groups = regex.captures_len() - 1;
@@ -69,8 +71,12 @@ impl Highlight for RegexpHighlighter {
         }
 
         // Add the remaining text after the last match
-        new_string.push_str(&input[last_end..]);
-        new_string
+        if last_end != 0 {
+            new_string.push_str(&input[last_end..]);
+            Cow::Owned(new_string)
+        } else {
+            Cow::Borrowed(input)
+        }
     }
 }
 

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use nu_ansi_term::Style as NuStyle;
 
 use crate::highlighter::Highlight;
@@ -31,11 +33,11 @@ fn ansi_color_code_without_reset(style: Style) -> String {
 }
 
 impl Highlight for QuoteHighlighter {
-    fn apply(&self, input: &str) -> String {
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str> {
         let quotes_count = input.chars().filter(|&ch| ch == self.quotes_token).count();
 
         if quotes_count % 2 != 0 {
-            return input.to_string();
+            return Cow::Borrowed(input);
         }
 
         let mut state = OutsideQuote;
@@ -80,7 +82,7 @@ impl Highlight for QuoteHighlighter {
             };
         }
 
-        output
+        Cow::Owned(output)
     }
 }
 
@@ -119,7 +121,7 @@ mod tests {
 
         for (input, expected) in cases {
             let actual = highlighter.apply(input);
-            assert_eq!(expected, actual.convert_escape_codes());
+            assert_eq!(expected, actual.to_string().convert_escape_codes());
         }
     }
 
@@ -135,7 +137,7 @@ mod tests {
 
         let actual = highlighter.apply(input.as_str());
 
-        assert_eq!(actual.convert_escape_codes(), expected);
+        assert_eq!(actual.to_string().convert_escape_codes(), expected);
     }
 
     #[test]
@@ -150,6 +152,6 @@ mod tests {
 
         let actual = highlighter.apply(input);
 
-        assert_eq!(actual.convert_escape_codes(), expected);
+        assert_eq!(actual.to_string().convert_escape_codes(), expected);
     }
 }

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use nu_ansi_term::Style as NuStyle;
 use regex::{Captures, Error, Regex};
 
@@ -20,13 +22,13 @@ impl PointerHighlighter {
             \b
             (?P<prefix>0x)
             (?P<first_half>[0-9a-fA-F]{8})
-            \b          
+            \b
             |
             \b
             (?P<prefix64>0x)
             (?P<first_half64>[0-9a-fA-F]{8})
             (?P<second_half>[0-9a-fA-F]{8})
-            \b  
+            \b
         ",
         )?;
 
@@ -42,43 +44,41 @@ impl PointerHighlighter {
 }
 
 impl Highlight for PointerHighlighter {
-    fn apply(&self, input: &str) -> String {
-        self.regex
-            .replace_all(input, |caps: &Captures<'_>| {
-                let prefix = caps.name("prefix").or_else(|| caps.name("prefix64")).unwrap().as_str();
-                let first_half = caps
-                    .name("first_half")
-                    .or_else(|| caps.name("first_half64"))
-                    .unwrap()
-                    .as_str();
-                let formatted_prefix = prefix
-                    .chars()
-                    .map(|c| highlight_char(c, self.number, self.x, self.letter))
-                    .collect::<String>();
-                let formatted_first_half = first_half
-                    .chars()
-                    .map(|c| highlight_char(c, self.number, self.x, self.letter))
-                    .collect::<String>();
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str> {
+        self.regex.replace_all(input, |caps: &Captures<'_>| {
+            let prefix = caps.name("prefix").or_else(|| caps.name("prefix64")).unwrap().as_str();
+            let first_half = caps
+                .name("first_half")
+                .or_else(|| caps.name("first_half64"))
+                .unwrap()
+                .as_str();
+            let formatted_prefix = prefix
+                .chars()
+                .map(|c| highlight_char(c, self.number, self.x, self.letter))
+                .collect::<String>();
+            let formatted_first_half = first_half
+                .chars()
+                .map(|c| highlight_char(c, self.number, self.x, self.letter))
+                .collect::<String>();
 
-                caps.name("second_half").map_or_else(
-                    || format!("{formatted_prefix}{formatted_first_half}"),
-                    |second_half| {
-                        let formatted_second_half = second_half
-                            .as_str()
-                            .chars()
-                            .map(|c| highlight_char(c, self.number, self.x, self.letter))
-                            .collect::<String>();
-                        format!(
-                            "{}{}{}{}",
-                            formatted_prefix,
-                            formatted_first_half,
-                            self.separator.paint(self.separator_token.to_string()),
-                            formatted_second_half
-                        )
-                    },
-                )
-            })
-            .to_string()
+            caps.name("second_half").map_or_else(
+                || format!("{formatted_prefix}{formatted_first_half}"),
+                |second_half| {
+                    let formatted_second_half = second_half
+                        .as_str()
+                        .chars()
+                        .map(|c| highlight_char(c, self.number, self.x, self.letter))
+                        .collect::<String>();
+                    format!(
+                        "{}{}{}{}",
+                        formatted_prefix,
+                        formatted_first_half,
+                        self.separator.paint(self.separator_token.to_string()),
+                        formatted_second_half
+                    )
+                },
+            )
+        })
     }
 }
 
@@ -112,11 +112,11 @@ mod tests {
 
         let cases = vec![
             (
-                "0x8c2a0aeb", 
+                "0x8c2a0aeb",
                 "[blue]0[reset][red]x[reset][blue]8[reset][magenta]c[reset][blue]2[reset][magenta]a[reset][blue]0[reset][magenta]a[reset][magenta]e[reset][magenta]b[reset]"
             ),
             (
-                "0xd7b3b2f446e2c21b", 
+                "0xd7b3b2f446e2c21b",
                 "[blue]0[reset][red]x[reset][magenta]d[reset][blue]7[reset][magenta]b[reset][blue]3[reset][magenta]b[reset][blue]2[reset][magenta]f[reset][blue]4[reset][green]•[reset][blue]4[reset][blue]6[reset][magenta]e[reset][blue]2[reset][magenta]c[reset][blue]2[reset][blue]1[reset][magenta]b[reset]"
             ),
             ("No numbers here!", "No numbers here!"),
@@ -124,7 +124,7 @@ mod tests {
 
         for (input, expected) in cases {
             let actual = highlighter.apply(input);
-            assert_eq!(expected, actual.convert_escape_codes());
+            assert_eq!(expected, actual.to_string().convert_escape_codes());
         }
     }
 }

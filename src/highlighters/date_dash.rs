@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::highlighter::Highlight;
 use crate::DateTimeConfig;
 use nu_ansi_term::Style as NuStyle;
@@ -48,24 +50,27 @@ impl DateDashHighlighter {
         let separator2 = caps.name("separator2").map(|m| self.separator.paint(m.as_str()));
 
         match (year, first, second, separator1, separator2) {
-            (Some(y), Some(f), Some(s), Some(s1), Some(s2)) => Some(format!("{y}{s1}{f}{s2}{s}")),
+            (Some(y), Some(f), Some(s), Some(s1), Some(s2)) => Some(format!("{}{}{}{}{}", y, s1, f, s2, s)),
             _ => None,
         }
     }
 
-    fn apply_regexes(&self, input: &str, regexes: &[&Regex]) -> String {
-        regexes.iter().fold(input.to_string(), |acc, regex| {
-            regex
-                .replace_all(&acc, |caps: &Captures<'_>| {
-                    self.highlight_date(caps).unwrap_or_else(|| caps[0].to_string())
-                })
-                .to_string()
+    fn apply_regexes<'a>(&self, input: &'a str, regexes: &[&Regex]) -> Cow<'a, str> {
+        regexes.iter().fold(Cow::Borrowed(input), |acc, regex| {
+            let result = regex.replace_all(&acc, |caps: &Captures<'_>| {
+                self.highlight_date(caps).unwrap_or_else(|| caps[0].to_string())
+            });
+
+            match result {
+                std::borrow::Cow::Borrowed(_) => acc,
+                std::borrow::Cow::Owned(s) => Cow::Owned(s),
+            }
         })
     }
 }
 
 impl Highlight for DateDashHighlighter {
-    fn apply(&self, input: &str) -> String {
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str> {
         self.apply_regexes(input, &[&self.regex_yyyy_xx_xx, &self.regex_xx_xx_yyyy])
     }
 }
@@ -113,7 +118,7 @@ mod tests {
 
         for (input, expected) in cases {
             let actual = highlighter.apply(input);
-            assert_eq!(expected, actual.convert_escape_codes());
+            assert_eq!(expected, actual.to_string().convert_escape_codes());
         }
     }
 }

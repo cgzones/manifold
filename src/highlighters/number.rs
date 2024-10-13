@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use nu_ansi_term::Style as NuStyle;
 use regex::{Captures, Error, Regex};
 
@@ -28,10 +30,9 @@ impl NumberHighlighter {
 }
 
 impl Highlight for NumberHighlighter {
-    fn apply(&self, input: &str) -> String {
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str> {
         self.regex
             .replace_all(input, |caps: &Captures<'_>| format!("{}", self.style.paint(&caps[0])))
-            .to_string()
     }
 }
 
@@ -64,7 +65,7 @@ mod tests {
 
         for (input, expected) in cases {
             let actual = highlighter.apply(input);
-            assert_eq!(expected, actual.convert_escape_codes());
+            assert_eq!(expected, actual.to_string().convert_escape_codes());
         }
     }
 }

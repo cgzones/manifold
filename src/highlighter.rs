@@ -20,10 +20,11 @@ use crate::highlighters::url::UrlHighlighter;
 use crate::highlighters::uuid::UuidHighlighter;
 use crate::normalizer::normalize_keyword_configs;
 use crate::split_and_apply::apply_only_to_unhighlighted;
+use std::borrow::Cow;
 use std::sync::Arc;
 
 pub trait Highlight: Sync + Send {
-    fn apply(&self, input: &str) -> String;
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str>;
 }
 
 pub struct Highlighter {
